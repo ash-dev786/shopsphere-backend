@@ -16,7 +16,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
-
+app.set('trust proxy', 1); 
 // Database Connection
 mongoose.connect(process.env.MONGO_URI || "mongodb+srv://ashardeveloper45_db_user:ashar123@cluster0.f7ozwoz.mongodb.net/ecommerce?retryWrites=true&w=majority")    .then(() => console.log('MongoDB Connected Successfully!'))
     .catch((err) => console.log('MongoDB Connection Failed:', err));
