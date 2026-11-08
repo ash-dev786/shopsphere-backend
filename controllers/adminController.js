@@ -4,11 +4,12 @@ const Order = require('../models/Order');
 
 const getAdminNotifications = async (req, res) => {
     try {
+
         const newVendors = await User.find({ role: 'vendor', isReadByAdmin: false })
             .sort({ createdAt: -1 })
-            .limit(5);
+            .limit(3);
 
-        const notifications = newVendors.map(vendor => ({
+        const vendorNotifications = newVendors.map(vendor => ({
             _id: vendor._id,
             title: 'New Vendor Registered',
             desc: `${vendor.shopname || vendor.name} submitted details`,
@@ -17,7 +18,24 @@ const getAdminNotifications = async (req, res) => {
             isRead: false
         }));
 
-        res.status(200).json(notifications);
+
+        const completedOrders = await Order.find({ status: 'Completed', isReadByAdmin: false })
+            .sort({ updatedAt: -1 })
+            .limit(3);
+
+        const orderNotifications = completedOrders.map(order => ({
+            _id: order._id,
+            title: 'Commission Earned',
+            desc: `Rs ${(order.vendorTotal * (order.commissionRate / 100)).toLocaleString()} (${order.commissionRate}%) deducted from Order #${order._id.toString().slice(-6).toUpperCase()}`,
+            time: order.updatedAt,
+            type: 'order',
+            isRead: false
+        }));
+
+
+        const allNotifications = [...vendorNotifications, ...orderNotifications].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 5);
+
+        res.status(200).json(allNotifications);
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
     }
@@ -27,6 +45,10 @@ const markAdminNotificationsRead = async (req, res) => {
     try {
         await User.updateMany(
             { role: 'vendor', isReadByAdmin: false },
+            { $set: { isReadByAdmin: true } }
+        );
+        await Order.updateMany(
+            { isReadByAdmin: false },
             { $set: { isReadByAdmin: true } }
         );
         res.status(200).json({ message: "Notifications marked as read" });

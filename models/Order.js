@@ -6,6 +6,7 @@ const orderSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
+    isReadByAdmin: { type: Boolean, default: false },
     vendor: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
